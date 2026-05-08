@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>互動式結構檢核 Widget</title>
+    <style>
+        /* 視覺排版：強調專業與易讀性 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f6; padding: 20px; }
+        .widget-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        
+        .control-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #34495e; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        .value-display { font-size: 0.9em; color: #7f8c8d; text-align: right; }
+
+        #status-box { 
+            padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; 
+            transition: all 0.3s ease; margin-top: 20px;
+        }
+        /* 狀態顏色定義 */
+        .safe { background-color: #27ae60; color: white; }
+        .warning { background-color: #e67e22; color: white; }
+        .danger { background-color: #c0392b; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="widget-card">
+    <h2>🏗️ 構件應力即時檢核</h2>
+    
+    <!-- 載重 P -->
+    <div class="control-group">
+        <label>作用力 P: <span id="p-val">5000</span> kgf</label>
+        <input type="range" id="p-slider" min="0" max="20000" step="100" value="5000">
+    </div>
+
+    <!-- 面積 A -->
+    <div class="control-group">
+        <label>斷面積 A: <span id="a-val">50</span> cm²</label>
+        <input type="range" id="a-slider" min="1" max="200" step="1" value="50">
+    </div>
+
+    <!-- 容許應力 Fc -->
+    <div class="control-group">
+        <label>容許應力 F<small>c</small>: <span id="fc-val">140</span> kgf/cm²</label>
+        <input type="range" id="fc-slider" min="50" max="400" step="5" value="140">
+    </div>
+
+    <!-- 結果顯示區 -->
+    <div id="status-box" class="safe">
+        計算應力 σ: <span id="stress-res">100.00</span> kgf/cm²<br>
+        D/C 比值: <span id="dc-res">0.71</span>
+    </div>
+</div>
+
+<script>
+    /**
+     * 更新與計算邏輯
+     * 1. 取得所有 DOM 元素
+     * 2. 監聽 input 事件實現即時更新
+     * 3. 執行物理公式並更新 UI 狀態
+     */
+    const pSlider = document.getElementById('p-slider');
+    const aSlider = document.getElementById('a-slider');
+    const fcSlider = document.getElementById('fc-slider');
+    const statusBox = document.getElementById('status-box');
+
+    function update() {
+        const P = parseFloat(pSlider.value);
+        const A = parseFloat(aSlider.value);
+        const Fc = parseFloat(fcSlider.value);
+
+        // 更新顯示數值
+        document.getElementById('p-val').textContent = P;
+        document.getElementById('a-val').textContent = A;
+        document.getElementById('fc-val').textContent = Fc;
+
+        // 應力計算 σ = P / A
+        const stress = P / A;
+        const dcRatio = stress / Fc;
+
+        // 更新結果文字
+        document.getElementById('stress-res').textContent = stress.toFixed(2);
+        document.getElementById('dc-res').textContent = dcRatio.toFixed(2);
+
+        // 視覺化判定
+        statusBox.className = ''; // 清除舊樣式
+        if (dcRatio > 1.0) {
+            statusBox.classList.add('danger');
+            statusBox.innerHTML += " (超限)";
+        } else if (dcRatio > 0.9) {
+            statusBox.classList.add('warning');
+            statusBox.innerHTML += " (趨近警戒)";
+        } else {
+            statusBox.classList.add('safe');
+            statusBox.innerHTML += " (安全)";
+        }
+    }
+
+    // 綁定監聽器
+    pSlider.addEventListener('input', update);
+    aSlider.addEventListener('input', update);
+    fcSlider.addEventListener('input', update);
+
+    // 初始化呼叫一次
+    update();
+</script>
+
+</body>
+</html>
